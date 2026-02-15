@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  tier         String        @default("STANDARD") // STANDARD | PRO
+  createdAt    DateTime      @default(now())
+
+  sessions     Session[]
+  authSessions AuthSession[]
+}
+
+model AuthSession {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  aircraft  String
+  topic     String
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  notes     String?
+  rating    Int?
+
+  // NEW: owned by a user
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([startedAt])
+  @@index([userId])
+}
+
+model Topic {
+  id        String   @id @default(cuid())
+  aircraft  String
+  title     String
+  category  String?
+  createdAt DateTime @default(now())
+
+  @@index([aircraft])
+  @@unique([aircraft, title])
+}
